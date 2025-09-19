@@ -44,9 +44,10 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/saas-notes');
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn;
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1);
+    throw error;
   }
 };
 
@@ -83,19 +84,28 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
-const startServer = async () => {
-  await connectDB();
-  
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+// Initialize database connection for serverless
+if (process.env.NODE_ENV === 'production') {
+  connectDB().catch(err => {
+    console.error('Failed to connect to MongoDB:', err);
   });
-};
+} else {
+  // Start server for local development
+  const startServer = async () => {
+    await connectDB();
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  };
 
-startServer().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+  if (require.main === module) {
+    startServer().catch(err => {
+      console.error('Failed to start server:', err);
+      process.exit(1);
+    });
+  }
+}
 
 module.exports = app;
