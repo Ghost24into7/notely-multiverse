@@ -28,6 +28,7 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'https://localhost:3000',
+    'https://notely-multiverse-ysqx.vercel.app',
     process.env.FRONTEND_URL,
     process.env.VERCEL_URL
   ].filter(Boolean),
