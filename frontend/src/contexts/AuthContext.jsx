@@ -51,6 +51,9 @@ export const AuthProvider = ({ children }) => {
       setToken(newToken);
       setUser(userData);
       
+      // Force a small delay to ensure state updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.error || 'Login failed';

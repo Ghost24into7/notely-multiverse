@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -13,6 +14,15 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already authenticated
+  useEffect(() => {
+    console.log('Auth state changed in Login:', { isAuthenticated });
+    if (isAuthenticated) {
+      console.log('User is authenticated, navigating to dashboard...');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Redirect if already authenticated (immediate check)
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -30,9 +40,19 @@ const Login = () => {
     setLoading(true);
     setError('');
 
+    console.log('Login attempt started for:', formData.email);
     const result = await login(formData.email, formData.password);
+    console.log('Login result:', result);
     
-    if (!result.success) {
+    if (result.success) {
+      console.log('Login successful, attempting navigation...');
+      // Force navigation after successful login
+      setTimeout(() => {
+        console.log('Navigating to dashboard...');
+        navigate('/dashboard', { replace: true });
+      }, 200);
+    } else {
+      console.log('Login failed:', result.error);
       setError(result.error);
     }
     
