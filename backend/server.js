@@ -87,7 +87,31 @@ app.use('*', (req, res) => {
 
 // Initialize database connection for serverless
 if (process.env.NODE_ENV === 'production') {
-  connectDB().catch(err => {
+  connectDB().then(async () => {
+    // Auto-seed data in production if requested
+    if (process.env.SEED_ON_START === 'true') {
+      try {
+        const User = require('./models/User');
+        const Tenant = require('./models/Tenant');
+        
+        // Check if data already exists
+        const userCount = await User.countDocuments();
+        if (userCount === 0) {
+          console.log('Seeding production database...');
+          const { exec } = require('child_process');
+          exec('node scripts/seed.js', (error, stdout, stderr) => {
+            if (error) {
+              console.error('Seeding error:', error);
+            } else {
+              console.log('Production database seeded successfully');
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Auto-seed error:', error);
+      }
+    }
+  }).catch(err => {
     console.error('Failed to connect to MongoDB:', err);
   });
 } else {
